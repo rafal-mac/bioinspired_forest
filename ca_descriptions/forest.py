@@ -16,6 +16,11 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
+CHAPARRAL = 0
+LAKE = 1
+FOREST = 2
+CANYON = 3
+BURNING = 4
 
 def transition_func(grid, neighbourstates, neighbourcounts):
     # dead = state == 0, live = state == 1
@@ -39,13 +44,13 @@ def setup(args):
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
     config.title = "Conway's game of life"
     config.dimensions = 2
-    config.states = (0, 1)
+    config.states = (CHAPARRAL, LAKE, FOREST, CANYON, BURNING)
     # ------------------------------------------------------------------------
 
     # ---- Override the defaults below (these may be changed at anytime) ----
 
-    # config.state_colors = [(0,0,0),(1,1,1)]
-    # config.num_generations = 150
+    config.state_colors = [(0.8,0.8,0),(0.2,0.6,1), (0, 0.4, 0), (1, 1, 0.2), (1, 0, 0)]
+    config.num_generations = 100
     # config.grid_dims = (200,200)
 
     # ----------------------------------------------------------------------
