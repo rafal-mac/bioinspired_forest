@@ -58,7 +58,7 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state):
     burnt = burning_cells & (burning_state == 0)
     print(burnt)
 
-    # CHANGEEEEEE
+    # CHANGEEEE
     x = np.random.rand(100, 100)
 
     for neigbhourstate in neighbourstates:
