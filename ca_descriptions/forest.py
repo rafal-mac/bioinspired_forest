@@ -121,11 +121,10 @@ def main():
     timeline = grid.run()
 
     # Prints the generation when the town catches fire
-    is_town_on_fire = False
     for index, generation in enumerate(timeline, start = 0):
-        if (BURNING in generation[75:80, 50:55]) & (not is_town_on_fire):
-            is_town_on_fire = True
+        if (BURNING in generation[75:80, 50:55]):
             print("Town on fire, generation - " + str(index))
+            break
 
     # save updated config to file
     config.save()
