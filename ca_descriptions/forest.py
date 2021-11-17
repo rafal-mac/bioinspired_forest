@@ -4,6 +4,7 @@
 # --- Set up executable path, do not edit ---
 import sys
 import inspect
+
 this_file_loc = (inspect.stack()[0][1])
 main_dir_loc = this_file_loc[:this_file_loc.index('ca_descriptions')]
 sys.path.append(main_dir_loc)
@@ -16,7 +17,7 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
-#need to research the speed of fire spreading in bushes, water, forests so 
+#need to research the speed of fire spreading in bushes, water, forests so
 # we know what constants to implement in the code
 
 CHAPARRAL = 0
@@ -25,54 +26,62 @@ FOREST = 2
 CANYON = 3
 BURNING = 4
 BURNED = 5
-OBJECT = 6
+TOWN = 6
 
 burn_time_chaparral = 60
 burn_time_forest = 400
 burn_time_canyon = 5
 
+# TRUE for fire starting at the incinerator
+start_at_incinerator = True
+# TRUE for fire starting at the power plant
+start_at_power_plant = False
+
 # starting grid
 global start_grid
 start_grid = np.zeros((100, 100), dtype=int)
+
+# unpenetratable border to contain the fire
+start_grid[0:99, 0:1] = BURNED
+start_grid[99:100, 0:99] = BURNED
+start_grid[1:100, 99:100] = BURNED
+start_grid[0:1, 1:100] = BURNED
+
 start_grid[30:40, 15:20] = LAKE
 start_grid[65:70, 60:90] = LAKE
 start_grid[40:80, 20:25] = FOREST
 start_grid[10:60, 30:40] = FOREST
-start_grid[50:60, 40:100] = FOREST
+start_grid[50:60, 40:99] = FOREST
 start_grid[10:90, 25:30] = CANYON
-start_grid[40, 10] = BURNING
-start_grid[40, 90] = BURNING
-start_grid[75:80 ,50:55] = OBJECT
+if start_at_incinerator:
+    start_grid[40, 10] = BURNING
+if start_at_power_plant:
+    start_grid[40, 90] = BURNING
+start_grid[75:80, 50:55] = TOWN
+
 
 def transition_func(grid, neighbourstates, neighbourcounts, burning_state):
-    print(burning_state)
-    # dead = state == 0, live = state == 1
-    # unpack state counts for state 0 and state 1
-    #dead_neighbours, live_neighbours = neighbourcounts
-    # create boolean arrays for the birth & survival rules
-    # if 3 live neighbours and is dead -> cell born
-    #birth = (live_neighbours == 3) & (grid == 0)
-    burning_cells = grid==4
+    burning_cells = grid == BURNING
     burning_state[burning_cells] -= 1
 
     burnt = burning_cells & (burning_state == 0)
-    print(burnt)
 
-    # CHANGEEEE
     x = np.random.rand(100, 100)
 
     for neigbhourstate in neighbourstates:
-        start_burning_chaparal = (grid == 0) & (neigbhourstate == 4) & (x > 0.3)
-        start_burning_forest = (grid == 2) & (neigbhourstate == 4) & (x > 0.3)
-        start_burning_canyon = (grid == 3) & (neigbhourstate == 4) & (x > 0.3)
+        start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
+                                                        == BURNING) & (x > 0.3)
+        start_burning_forest = (grid == FOREST) & (neigbhourstate
+                                                   == BURNING) & (x > 0.7)
+        start_burning_canyon = (grid == CANYON) & (neigbhourstate
+                                                   == BURNING) & (x > 0.9)
+        start_burning_town = (grid == TOWN) & (neigbhourstate
+                                               == BURNING) & (x > 0.9)
 
-        grid[start_burning_chaparal | start_burning_forest | start_burning_canyon] = 4
-    # if 2 or 3 live neighbours and is alive -> survives
-    #survive = ((live_neighbours == 2) | (live_neighbours == 3)) & (grid == 1)
-    # Set all cells to 0 (dead)
-    # Set cells to 1 where either cell is born or survives
-    
-    grid[burnt]=BURNED
+        grid[start_burning_chaparal | start_burning_forest
+             | start_burning_canyon | start_burning_town] = BURNING
+
+    grid[burnt] = BURNED
 
     return grid
 
@@ -82,10 +91,11 @@ def setup(args):
     config = utils.load(config_path)
     config.title = "Forest fire model"
     config.dimensions = 2
-    config.states = (CHAPARRAL, LAKE, FOREST, CANYON, BURNING,BURNED,OBJECT)
-    config.state_colors = [(0.8,0.8,0),(0.2,0.6,1), (0, 0.4, 0), (1, 1, 0.2), (1, 0, 0),(0.4,0.4,0.4),(0,0,0)]
+    config.states = (CHAPARRAL, LAKE, FOREST, CANYON, BURNING, BURNED, TOWN)
+    config.state_colors = [(0.8, 0.8, 0), (0.2, 0.6, 1), (0, 0.4, 0),
+                           (1, 1, 0.2), (1, 0, 0), (0.4, 0.4, 0.4), (0, 0, 0)]
     config.num_generations = 100
-    config.grid_dims = (100,100)
+    config.grid_dims = (100, 100)
     config.set_initial_grid(start_grid)
 
     if len(args) == 2:
@@ -103,7 +113,7 @@ def main():
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
     burning_state[start_grid == 3] = burn_time_canyon
-    
+
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state))
 
