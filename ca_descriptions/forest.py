@@ -41,6 +41,8 @@ start_at_power_plant = False
 global start_grid
 start_grid = np.zeros((100, 100), dtype=int)
 
+wind_vector = [0.9, 0] #x and y axis 
+
 # unpenetratable border to contain the fire
 start_grid[0:99, 0:1] = BURNED
 start_grid[99:100, 0:99] = BURNED
@@ -59,18 +61,44 @@ if start_at_power_plant:
     start_grid[40, 90] = BURNING
 start_grid[75:80, 50:55] = TOWN
 
+directions = ["NW", "N", "NE", "E", "SE", "S", "SW" ,"W"]
 
 def transition_func(grid, neighbourstates, neighbourcounts, burning_state):
+    
     burning_cells = grid == BURNING
-    burning_state[burning_cells] -= 1
+    burning_state[burning_cells] -= 1 
 
-    burnt = burning_cells & (burning_state == 0)
+    burnt = burning_cells & (burning_state == 0) 
 
-    x = np.random.rand(100, 100)
+    x = np.random.rand(100, 100) 
+    #current durection holder 
+    counter = 0
 
     for neigbhourstate in neighbourstates:
+        print(np.shape(neigbhourstate))
+        break
+        direction_no = counter % 8 
+      
+        if wind_vector[0] != 0:
+            if directions[direction_no] == "N":
+                x = x * 1 + wind_vector[0]
+            if directions[direction_no] == "S":
+                if wind_vector[0] < 0:
+                    x = x * -1
+                x = x * wind_vector[0]
+        if wind_vector[1] != 0:
+            if directions[direction_no] == "E":
+                x = x * 1 + wind_vector[1]
+            if directions[direction_no] == "W":
+                if wind_vector[0] < 0:
+                    x = x * -1
+                x = x * wind_vector[1]
+        counter += 1
+
+        print(neigbhourstate == BURNING)
+        
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (x > 0.3)
+                                                        == BURNING) & (x > 0.3) 
         start_burning_forest = (grid == FOREST) & (neigbhourstate
                                                    == BURNING) & (x > 0.7)
         start_burning_canyon = (grid == CANYON) & (neigbhourstate
