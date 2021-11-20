@@ -28,9 +28,9 @@ BURNING = 4
 BURNED = 5
 TOWN = 6
 
-burn_time_chaparral = 60
-burn_time_forest = 400
-burn_time_canyon = 5
+burn_time_chaparral = 32
+burn_time_forest = 300
+burn_time_canyon = 2
 
 # TRUE for fire starting at the incinerator
 start_at_incinerator = True
@@ -70,11 +70,11 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state):
 
     for neigbhourstate in neighbourstates:
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (x > 0.3)
+                                                        == BURNING) & (x > 0.7)
         start_burning_forest = (grid == FOREST) & (neigbhourstate
-                                                   == BURNING) & (x > 0.7)
-        start_burning_canyon = (grid == CANYON) & (neigbhourstate
                                                    == BURNING) & (x > 0.9)
+        start_burning_canyon = (grid == CANYON) & (neigbhourstate
+                                                   == BURNING) & (x > 0.2)
         start_burning_town = (grid == TOWN) & (neigbhourstate
                                                == BURNING) & (x > 0.9)
 
