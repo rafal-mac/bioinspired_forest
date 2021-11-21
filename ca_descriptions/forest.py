@@ -146,7 +146,7 @@ def main():
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
     burning_state[start_grid == 3] = burn_time_canyon
-    wind_direction = [0.6,0]
+    wind_direction = [0.6, 0.6]
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state, wind_direction))
 
