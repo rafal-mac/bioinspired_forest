@@ -37,6 +37,10 @@ start_at_incinerator = True
 # TRUE for fire starting at the power plant
 start_at_power_plant = False
 
+# Determines the generation and the location of the water drop
+global water_countdown
+water_countdown = 40
+
 # starting grid
 global start_grid
 start_grid = np.zeros((100, 100), dtype=int)
@@ -81,6 +85,14 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state):
         grid[start_burning_chaparal | start_burning_forest
              | start_burning_canyon | start_burning_town] = BURNING
 
+    global water_countdown
+    global start_grid
+    water_countdown -= 1
+    
+    # The water is released over the couse of 31 generations,
+    # mimicing a helicopter flying over a piece of land in the direction away from the town
+    if (water_countdown <= 0) & (water_countdown > -31):
+        grid[(70 + water_countdown):(74 + water_countdown), 30:50] = start_grid[(70 + water_countdown):(74 + water_countdown), 30:50]
     grid[burnt] = BURNED
 
     return grid
@@ -119,6 +131,12 @@ def main():
 
     # Run the CA, save grid state every generation to timeline
     timeline = grid.run()
+
+    # Prints the generation when the town catches fire
+    for index, generation in enumerate(timeline, start = 0):
+        if (BURNING in generation[75:80, 50:55]):
+            print("Town on fire, generation - " + str(index))
+            break
 
     # save updated config to file
     config.save()
