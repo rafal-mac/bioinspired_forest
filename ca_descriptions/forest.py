@@ -24,9 +24,18 @@ CHAPARRAL = 0
 LAKE = 1
 FOREST = 2
 CANYON = 3
-BURNING = 4
 BURNED = 5
 TOWN = 6
+
+# Add multiple levels of burning (the higher the number, the more severe the burning)
+BURNING_1 = 7
+BURNING_2 = 8
+BURNING_3 = 4
+BURNING = [
+    [BURNING_1, 0.75, 0.9, 0.25, 0.90],
+    [BURNING_2, 0.70, 0.85, 0.20, 0.85],
+    [BURNING_3, 0.65, 0.8, 0.15, 0.8],
+]
 
 global GRID_SIZE
 GRID_SIZE = 100
@@ -61,16 +70,29 @@ start_grid[10:60, 30:40] = FOREST
 start_grid[50:60, 40:99] = FOREST
 start_grid[10:90, 25:30] = CANYON
 if start_at_incinerator:
-    start_grid[40, 10] = BURNING
+    start_grid[40, 10] = BURNING_3
 if start_at_power_plant:
-    start_grid[40, 90] = BURNING
+    start_grid[40, 90] = BURNING_3
 start_grid[75:80, 50:55] = TOWN
+
+# Create a grid of burning times of each types of terrain
+initial_burning_state = np.zeros((GRID_SIZE, GRID_SIZE))
+initial_burning_state[start_grid == 0] = burn_time_chaparral
+initial_burning_state[start_grid == 2] = burn_time_forest
+initial_burning_state[start_grid == 3] = burn_time_canyon
+
+# This burning state will get updated every generation
+# and compared to the initial_burning_state for the purposes of updating fire levels
+burning_state = np.zeros((GRID_SIZE, GRID_SIZE))
+burning_state[start_grid == 0] = burn_time_chaparral
+burning_state[start_grid == 2] = burn_time_forest
+burning_state[start_grid == 3] = burn_time_canyon
 
 cell_directions = ["NW", "N", "NE", "E", "SE", "S", "SW" ,"W"] #to check directions
 
-def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_direction):
-    burning_cells = grid == BURNING
-    burning_state[burning_cells] -= 1 
+def transition_func(grid, neighbourstates, neighbourcounts, burning_state, initial_burning_state, wind_direction):
+    burning_cells = (grid == BURNING_1) | (grid == BURNING_2) | (grid == BURNING_3)
+    burning_state[burning_cells] -= 1
 
     burnt = burning_cells & (burning_state == 0) 
 
@@ -78,6 +100,11 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
     # Introduce probability
     global GRID_SIZE
     x = np.random.rand(GRID_SIZE, GRID_SIZE)
+
+    # Create stronger fire as cells burn
+    grid[(grid == BURNING_1) & (burning_state < 2/3 * initial_burning_state)] = BURNING_2
+
+    grid[(grid == BURNING_2) & (burning_state < 1/3 * initial_burning_state)] = BURNING_3
 
     # Look at each neighbour of each cell separately and determine whether they're on fire.
     # The more cells burning around the target cell, the more chances for it to catch fire.
@@ -143,18 +170,19 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
         """
 
         counter += 1
-        
-        start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (factor > 0.7)
-        start_burning_forest = (grid == FOREST) & (neigbhourstate
-                                                   == BURNING) & (factor > 0.9)
-        start_burning_canyon = (grid == CANYON) & (neigbhourstate
-                                                   == BURNING) & (factor > 0.2)
-        start_burning_town = (grid == TOWN) & (neigbhourstate
-                                               == BURNING) & (factor > 0.9)
 
-        grid[start_burning_chaparal | start_burning_forest
-             | start_burning_canyon | start_burning_town] = BURNING
+        for burning_level in BURNING:
+            start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
+                                                            == burning_level[0]) & (factor > burning_level[1])
+            start_burning_forest = (grid == FOREST) & (neigbhourstate
+                                                    == burning_level[0]) & (factor > burning_level[2])
+            start_burning_canyon = (grid == CANYON) & (neigbhourstate
+                                                    == burning_level[0]) & (factor > burning_level[3])
+            start_burning_town = (grid == TOWN) & (neigbhourstate
+                                                == burning_level[0]) & (factor > burning_level[4])
+
+                
+            grid[start_burning_chaparal | start_burning_forest | start_burning_canyon | start_burning_town] = BURNING_1
 
     global water_countdown
     global start_grid
@@ -174,15 +202,17 @@ def setup(args):
     config = utils.load(config_path)
     config.title = "Forest fire model"
     config.dimensions = 2
-    config.states = (CHAPARRAL, LAKE, FOREST, CANYON, BURNING, BURNED, TOWN)
+    config.states = (CHAPARRAL, LAKE, FOREST, CANYON, BURNING_3, BURNED, TOWN, BURNING_1, BURNING_2)
     config.state_colors = [
         (0.8, 0.8, 0),
         (0.2, 0.6, 1),
         (0, 0.4, 0),
         (1, 1, 0.2),
-        (1, 0, 0), 
+        (1, 0, 0),
         (0.4, 0.4, 0.4), 
-        (0, 0, 0)
+        (0, 0, 0),
+        (1, 0.4, 0.4),
+        (1, 0.2, 0.2),
     ]
     config.num_generations = 100
     config.grid_dims = (GRID_SIZE, GRID_SIZE)
@@ -199,21 +229,17 @@ def main():
     # Open the config object
     config = setup(sys.argv[1:])
 
-    # Create a grid of burning times of each types of terrain
-    burning_state = np.zeros(config.grid_dims)
-    burning_state[start_grid == 0] = burn_time_chaparral
-    burning_state[start_grid == 2] = burn_time_forest
-    burning_state[start_grid == 3] = burn_time_canyon
     wind_direction = [0, -0.5] 
+    
     # Create grid object
-    grid = Grid2D(config, (transition_func, burning_state, wind_direction))
+    grid = Grid2D(config, (transition_func, burning_state, initial_burning_state, wind_direction))
 
     # Run the CA, save grid state every generation to timeline
     timeline = grid.run()
 
     # Prints the generation when the town catches fire
     for index, generation in enumerate(timeline, start = 0):
-        if (BURNING in generation[75:80, 50:55]):
+        if (BURNING_1 in generation[75:80, 50:55]):
             print("Town on fire, generation - " + str(index))
             break
 
