@@ -20,9 +20,6 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
-#need to research the speed of fire spreading in bushes, water, forests so
-# we know what constants to implement in the code
-
 CHAPARRAL = 0
 LAKE = 1
 FOREST = 2
@@ -30,6 +27,9 @@ CANYON = 3
 BURNING = 4
 BURNED = 5
 TOWN = 6
+
+global GRID_SIZE
+GRID_SIZE = 100
 
 burn_time_chaparral = 32
 burn_time_forest = 300
@@ -46,7 +46,7 @@ water_countdown = 40
 
 # starting grid
 global start_grid
-start_grid = np.zeros((100, 100), dtype=int)
+start_grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
 
 # unpenetratable border to contain the fire
 start_grid[0:99, 0:1] = BURNED
@@ -74,10 +74,13 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
 
     burnt = burning_cells & (burning_state == 0) 
 
-    x = np.random.rand(100, 100) 
- 
     counter = 0
+    # Introduce probability
+    global GRID_SIZE
+    x = np.random.rand(GRID_SIZE, GRID_SIZE)
 
+    # Look at each neighbour of each cell separately and determine whether they're on fire.
+    # The more cells burning around the target cell, the more chances for it to catch fire.
     for neigbhourstate in neighbourstates:
         
         #probability of setting on fire multiply by factor of wind strength 
@@ -157,8 +160,8 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
     global start_grid
     water_countdown -= 1
     
-    # The water is released over the couse of 31 generations,
-    # mimicing a helicopter flying over a piece of land in the direction away from the town
+    # The water is released over the couse of multiple generations,
+    # simulating rounds of helicopters flying over a piece of land in the direction away from the town
     if (water_countdown <= 0) & (water_countdown > -31):
         grid[(70 + water_countdown):(74 + water_countdown), 30:50] = start_grid[(70 + water_countdown):(74 + water_countdown), 30:50]
     grid[burnt] = BURNED
@@ -172,10 +175,17 @@ def setup(args):
     config.title = "Forest fire model"
     config.dimensions = 2
     config.states = (CHAPARRAL, LAKE, FOREST, CANYON, BURNING, BURNED, TOWN)
-    config.state_colors = [(0.8, 0.8, 0), (0.2, 0.6, 1), (0, 0.4, 0),
-                           (1, 1, 0.2), (1, 0, 0), (0.4, 0.4, 0.4), (0, 0, 0)]
+    config.state_colors = [
+        (0.8, 0.8, 0),
+        (0.2, 0.6, 1),
+        (0, 0.4, 0),
+        (1, 1, 0.2),
+        (1, 0, 0), 
+        (0.4, 0.4, 0.4), 
+        (0, 0, 0)
+    ]
     config.num_generations = 100
-    config.grid_dims = (100, 100)
+    config.grid_dims = (GRID_SIZE, GRID_SIZE)
     config.set_initial_grid(start_grid)
 
     if len(args) == 2:
@@ -189,6 +199,7 @@ def main():
     # Open the config object
     config = setup(sys.argv[1:])
 
+    # Create a grid of burning times of each types of terrain
     burning_state = np.zeros(config.grid_dims)
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
