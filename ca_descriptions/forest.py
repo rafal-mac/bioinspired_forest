@@ -28,14 +28,18 @@ BURNING = 4
 BURNED = 5
 TOWN = 6
 
-burn_time_chaparral = 60
-burn_time_forest = 400
-burn_time_canyon = 5
+burn_time_chaparral = 32
+burn_time_forest = 300
+burn_time_canyon = 2
 
 # TRUE for fire starting at the incinerator
 start_at_incinerator = True
 # TRUE for fire starting at the power plant
 start_at_power_plant = False
+
+# Determines the generation and the location of the water drop
+global water_countdown
+water_countdown = 40
 
 # starting grid
 global start_grid
@@ -103,17 +107,25 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
         counter += 1
         
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (x > 0.3) 
+                                                        == BURNING) & (x > 0.7)
         start_burning_forest = (grid == FOREST) & (neigbhourstate
-                                                   == BURNING) & (x > 0.7)
-        start_burning_canyon = (grid == CANYON) & (neigbhourstate
                                                    == BURNING) & (x > 0.9)
+        start_burning_canyon = (grid == CANYON) & (neigbhourstate
+                                                   == BURNING) & (x > 0.2)
         start_burning_town = (grid == TOWN) & (neigbhourstate
                                                == BURNING) & (x > 0.9)
 
         grid[start_burning_chaparal | start_burning_forest
              | start_burning_canyon | start_burning_town] = BURNING
 
+    global water_countdown
+    global start_grid
+    water_countdown -= 1
+    
+    # The water is released over the couse of 31 generations,
+    # mimicing a helicopter flying over a piece of land in the direction away from the town
+    if (water_countdown <= 0) & (water_countdown > -31):
+        grid[(70 + water_countdown):(74 + water_countdown), 30:50] = start_grid[(70 + water_countdown):(74 + water_countdown), 30:50]
     grid[burnt] = BURNED
 
     return grid
@@ -152,6 +164,12 @@ def main():
 
     # Run the CA, save grid state every generation to timeline
     timeline = grid.run()
+
+    # Prints the generation when the town catches fire
+    for index, generation in enumerate(timeline, start = 0):
+        if (BURNING in generation[75:80, 50:55]):
+            print("Town on fire, generation - " + str(index))
+            break
 
     # save updated config to file
     config.save()
