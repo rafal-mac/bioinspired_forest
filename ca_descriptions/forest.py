@@ -89,16 +89,16 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                     factor = x * wind_direction[0] * -1
                 else:
                     factor = x *  (1 + wind_direction[0])
-            if cell_directions[direction_no] == "N":
+            if cell_directions[direction_no] == "N" :
                 if wind_direction[0] < 0:
                     factor = x * (1 + (wind_direction[0] * -1))
                 else:
                     factor = x * wind_direction[0]
+        
 
         if wind_direction[1] != 0:
-            if  cell_directions[direction_no] == "W": #if considered a western cell on fire
-                if wind_direction[1] < 0: #increase if easterly (positive) wind
-                #comments; diagonal winds; etc 
+            if  cell_directions[direction_no] == "W":
+                if wind_direction[1] < 0:  
                     factor = x * ( -1 * wind_direction[1]) 
                 else:
                     factor = x * (1 + wind_direction[1])
@@ -107,6 +107,38 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                     factor = 1 + (wind_direction[1] * -1)
                 else:
                     factor = x * wind_direction[1]
+        
+        if wind_direction[0] != 0 and wind_direction[1] != 0:
+            if cell_directions[direction_no] == "NE" or "NW":
+                if wind_direction[0] > 0:
+                    factor = x * (1 + wind_direction[0])
+                else: 
+                    factor = x * (-1 * wind_direction[0])
+
+                
+            if cell_directions[direction_no] == "SE" or cell_directions[direction_no] == "SW":
+                if wind_direction[0] > 0:
+                    factor = x *  wind_direction[0]
+                else:
+                    factor = x *  (1 + (-1 * wind_direction[0]))
+                
+            
+            if cell_directions[direction_no] == "SE" or cell_directions[direction_no] == "NE":
+                if wind_direction[1] > 0:
+                    factor = factor * wind_direction[1]
+                else:
+                    factor = factor * (1+ (-1 * wind_direction[1]))
+            
+            if cell_directions[direction_no] == "SW" or cell_directions[direction_no] == "NW":
+                if wind_direction[1] > 0:
+                    factor = factor * (1+  wind_direction[1])
+                else:
+                    factor = factor * (-1 * wind_direction[1])
+
+
+
+
+
         counter += 1
         
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
