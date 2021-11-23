@@ -5,6 +5,9 @@
 import sys
 import inspect
 
+
+#why only diagonal top left to bottom right
+
 this_file_loc = (inspect.stack()[0][1])
 main_dir_loc = this_file_loc[:this_file_loc.index('ca_descriptions')]
 sys.path.append(main_dir_loc)
@@ -64,10 +67,9 @@ if start_at_power_plant:
     start_grid[40, 90] = BURNING
 start_grid[75:80, 50:55] = TOWN
 
-cell_directions = ["NW", "N", "NE", "E", "SE", "S", "SW" ,"W"]
+cell_directions = ["NW", "N", "NE", "E", "SE", "S", "SW" ,"W"] #to check directions
 
 def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_direction):
-    print(np.shape(neighbourstates))
     burning_cells = grid == BURNING
     burning_state[burning_cells] -= 1 
 
@@ -79,41 +81,41 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
 
     for neigbhourstate in neighbourstates:
         direction_no = counter % 8 
+        factor = x 
+        #small wind is stopping spread rather than causing a small increase 
         if wind_direction[0] != 0:
             if cell_directions[direction_no] == "S": #south , if cell to the south is on fire 
                 if wind_direction[0] < 0: #if positive aka northern wind increase 
-                    factor = wind_direction[0] * -1
-                    x = x * factor
+                    factor = x * wind_direction[0] * -1
                 else:
-                    x = x *  (1 + wind_direction[0] )
+                    factor = x *  (1 + wind_direction[0])
             if cell_directions[direction_no] == "N":
                 if wind_direction[0] < 0:
-                    factor = wind_direction[0] * -1
-                    x = x * (1 + factor)
+                    factor = x * (1 + (wind_direction[0] * -1))
                 else:
-                    x = x * wind_direction[0]
+                    factor = x * wind_direction[0]
 
         if wind_direction[1] != 0:
             if cell_directions[direction_no] == "W": #if considered a western cell on fire
                 if wind_direction[1] < 0: #increase if easterly (positive) wind
-                    x = x * ( -1 * wind_direction[1]) 
+                    factor = x * ( -1 * wind_direction[1]) 
                 else:
-                    x = x * (1 + wind_direction[0])
+                    factor = x * (1 + wind_direction[1])
             if cell_directions[direction_no] == "E":
-                if wind_direction[0] < 0:
-                    x = 1 + (wind_direction[0] * -1)
+                if wind_direction[1] < 0:
+                    factor = 1 + (wind_direction[1] * -1)
                 else:
-                    x = x * wind_direction[1]
+                    factor = x * wind_direction[1]
         counter += 1
         
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (x > 0.7)
+                                                        == BURNING) & (factor > 0.7)
         start_burning_forest = (grid == FOREST) & (neigbhourstate
-                                                   == BURNING) & (x > 0.9)
+                                                   == BURNING) & (factor > 0.9)
         start_burning_canyon = (grid == CANYON) & (neigbhourstate
-                                                   == BURNING) & (x > 0.2)
+                                                   == BURNING) & (factor > 0.2)
         start_burning_town = (grid == TOWN) & (neigbhourstate
-                                               == BURNING) & (x > 0.9)
+                                               == BURNING) & (factor > 0.9)
 
         grid[start_burning_chaparal | start_burning_forest
              | start_burning_canyon | start_burning_town] = BURNING
@@ -158,7 +160,7 @@ def main():
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
     burning_state[start_grid == 3] = burn_time_canyon
-    wind_direction = [0.6, 0.6]
+    wind_direction = [-0.2, 0.8] #why not east
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state, wind_direction))
 
