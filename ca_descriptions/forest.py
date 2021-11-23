@@ -80,21 +80,24 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
     counter = 0
 
     for neigbhourstate in neighbourstates:
+        
+        #probability of setting on fire multiply by factor of wind strength 
+        
         direction_no = counter % 8 
         factor = x 
-        #small wind is stopping spread rather than causing a small increase 
+
+        #if wind factor exists multiply as appropriate
         if wind_direction[0] != 0:
-            if cell_directions[direction_no] == "S" : #south , if cell to the south is on fire 
-                if wind_direction[0] < 0: #if positive aka northern wind increase 
-                    factor = x * wind_direction[0] * -1
+            if cell_directions[direction_no] == "S" :  
+                if wind_direction[0] < 0: 
+                    factor = x * wind_direction[0] * -1 #negative values reflecting direction need to be made positive
                 else:
-                    factor = x *  (1 + wind_direction[0])
+                    factor = x *  (1 + wind_direction[0]) 
             if cell_directions[direction_no] == "N" :
                 if wind_direction[0] < 0:
                     factor = x * (1 + (wind_direction[0] * -1))
                 else:
-                    factor = x * wind_direction[0]
-        
+                    factor = x * wind_direction[0]  #probability decreases if wind in opposite direction        
 
         if wind_direction[1] != 0:
             if  cell_directions[direction_no] == "W":
@@ -107,7 +110,8 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                     factor = 1 + (wind_direction[1] * -1)
                 else:
                     factor = x * wind_direction[1]
-        
+
+        #diagonals considered with both north and east vectors
         if wind_direction[0] != 0 and wind_direction[1] != 0:
             if cell_directions[direction_no] == "NE" or "NW":
                 if wind_direction[0] > 0:
@@ -137,18 +141,16 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
 
 
 
-
-
         counter += 1
         
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (factor > 0.1)
+                                                        == BURNING) & (factor > 0.7)
         start_burning_forest = (grid == FOREST) & (neigbhourstate
-                                                   == BURNING) & (factor > 0.5)
+                                                   == BURNING) & (factor > 0.9)
         start_burning_canyon = (grid == CANYON) & (neigbhourstate
                                                    == BURNING) & (factor > 0.2)
         start_burning_town = (grid == TOWN) & (neigbhourstate
-                                               == BURNING) & (factor > 0.7)
+                                               == BURNING) & (factor > 0.9)
 
         grid[start_burning_chaparal | start_burning_forest
              | start_burning_canyon | start_burning_town] = BURNING
