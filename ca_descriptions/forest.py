@@ -76,7 +76,7 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
     burnt = burning_cells & (burning_state == 0) 
 
     x = np.random.rand(100, 100) 
-    #current durection holder 
+ 
     counter = 0
 
     for neigbhourstate in neighbourstates:
@@ -84,7 +84,7 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
         factor = x 
         #small wind is stopping spread rather than causing a small increase 
         if wind_direction[0] != 0:
-            if cell_directions[direction_no] == "S": #south , if cell to the south is on fire 
+            if cell_directions[direction_no] == "S" : #south , if cell to the south is on fire 
                 if wind_direction[0] < 0: #if positive aka northern wind increase 
                     factor = x * wind_direction[0] * -1
                 else:
@@ -96,8 +96,9 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                     factor = x * wind_direction[0]
 
         if wind_direction[1] != 0:
-            if cell_directions[direction_no] == "W": #if considered a western cell on fire
+            if  cell_directions[direction_no] == "W": #if considered a western cell on fire
                 if wind_direction[1] < 0: #increase if easterly (positive) wind
+                #comments; diagonal winds; etc 
                     factor = x * ( -1 * wind_direction[1]) 
                 else:
                     factor = x * (1 + wind_direction[1])
@@ -109,13 +110,13 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
         counter += 1
         
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
-                                                        == BURNING) & (factor > 0.7)
+                                                        == BURNING) & (factor > 0.1)
         start_burning_forest = (grid == FOREST) & (neigbhourstate
-                                                   == BURNING) & (factor > 0.9)
+                                                   == BURNING) & (factor > 0.5)
         start_burning_canyon = (grid == CANYON) & (neigbhourstate
                                                    == BURNING) & (factor > 0.2)
         start_burning_town = (grid == TOWN) & (neigbhourstate
-                                               == BURNING) & (factor > 0.9)
+                                               == BURNING) & (factor > 0.7)
 
         grid[start_burning_chaparal | start_burning_forest
              | start_burning_canyon | start_burning_town] = BURNING
@@ -160,7 +161,7 @@ def main():
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
     burning_state[start_grid == 3] = burn_time_canyon
-    wind_direction = [-0.2, 0.8] #why not east
+    wind_direction = [0, 0.5] 
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state, wind_direction))
 
