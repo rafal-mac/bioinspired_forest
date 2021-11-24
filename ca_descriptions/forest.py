@@ -35,7 +35,8 @@ water_drop = {
     'x1': 30,
     'x2': 50, # difference between xs determines the width of the drop 
     'y1': 70,
-    'y2': 74 # difference between ys determines the high of a single drop (there's multiple small drops)
+    'y2': 74 # difference between ys determines the height of a single drop 
+             # (there's multiple small drops going in the direction away from the town)
 }
 
 # Determines the wind direction (values between -0.5 and 0.5)
