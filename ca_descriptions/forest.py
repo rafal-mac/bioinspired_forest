@@ -5,9 +5,6 @@
 import sys
 import inspect
 
-
-#why only diagonal top left to bottom right
-
 this_file_loc = (inspect.stack()[0][1])
 main_dir_loc = this_file_loc[:this_file_loc.index('ca_descriptions')]
 sys.path.append(main_dir_loc)
@@ -60,14 +57,14 @@ start_grid[40:80, 20:25] = FOREST
 start_grid[10:60, 30:40] = FOREST
 start_grid[50:60, 40:99] = FOREST
 start_grid[10:90, 25:30] = CANYON
+
 if start_at_incinerator:
     start_grid[40, 10] = BURNING
 if start_at_power_plant:
     start_grid[40, 90] = BURNING
 start_grid[75:80, 50:55] = TOWN
 
-cell_directions = ["NW", "N", "NE", "E", "SE", "S", "SW" ,"W"] #to check directions
-
+cell_directions = ["NW", "N", "NE", "W", "E", "SW", "S" ,"SW"] 
 def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_direction):
     burning_cells = grid == BURNING
     burning_state[burning_cells] -= 1 
@@ -81,7 +78,7 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
     for neigbhourstate in neighbourstates:
         
         #probability of setting on fire multiply by factor of wind strength 
-        
+
         direction_no = counter % 8 
         factor = x 
 
@@ -89,7 +86,8 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
         if wind_direction[0] != 0:
             if cell_directions[direction_no] == "S" :  
                 if wind_direction[0] < 0: 
-                    factor = x * wind_direction[0] * -1 #negative values reflecting direction need to be made positive
+                    factor = x * wind_direction[0] * -1 
+                    #negative values reflecting direction need to be made positive
                 else:
                     factor = x *  (1 + wind_direction[0]) 
             if cell_directions[direction_no] == "N" :
@@ -97,48 +95,20 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                     factor = x * (1 + (wind_direction[0] * -1))
                 else:
                     factor = x * wind_direction[0]  #probability decreases if wind in opposite direction        
-
+        
         if wind_direction[1] != 0:
-            if  cell_directions[direction_no] == "W":
+            if  cell_directions[direction_no] == "E":
                 if wind_direction[1] < 0:  
                     factor = x * ( -1 * wind_direction[1]) 
                 else:
                     factor = x * (1 + wind_direction[1])
-            if cell_directions[direction_no] == "E":
+            if cell_directions[direction_no] == "W":
                 if wind_direction[1] < 0:
-                    factor = 1 + (wind_direction[1] * -1)
+                    factor = x * (1 + (wind_direction[1] * -1))
                 else:
                     factor = x * wind_direction[1]
-        """
         #diagonals considered with both north and east vectors
-        if wind_direction[0] != 0 and wind_direction[1] != 0:
-            if cell_directions[direction_no] == "NE" or "NW":
-                if wind_direction[0] > 0:
-                    factor = x * (1 + wind_direction[0])
-                else: 
-                    factor = x * (-1 * wind_direction[0])
-
-                
-            if cell_directions[direction_no] == "SE" or cell_directions[direction_no] == "SW":
-                if wind_direction[0] > 0:
-                    factor = x *  wind_direction[0]
-                else:
-                    factor = x *  (1 + (-1 * wind_direction[0]))
-                
-            if cell_directions[direction_no] == "SE" or cell_directions[direction_no] == "NE":
-                if wind_direction[1] > 0:
-                    factor = factor * wind_direction[1]
-                else:
-                    factor = factor * (1+ (-1 * wind_direction[1]))
             
-            if cell_directions[direction_no] == "SW" or cell_directions[direction_no] == "NW":
-                if wind_direction[1] > 0:
-                    factor = factor * (1+  wind_direction[1])
-                else:
-                    factor = factor * (-1 * wind_direction[1])
-
-        """
-
         counter += 1
         
         start_burning_chaparal = (grid == CHAPARRAL) & (neigbhourstate
@@ -152,7 +122,8 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
 
         grid[start_burning_chaparal | start_burning_forest
              | start_burning_canyon | start_burning_town] = BURNING
-
+        
+    
     global water_countdown
     global start_grid
     water_countdown -= 1
@@ -184,7 +155,6 @@ def setup(args):
 
     return config
 
-
 def main():
     # Open the config object
     config = setup(sys.argv[1:])
@@ -193,7 +163,7 @@ def main():
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
     burning_state[start_grid == 3] = burn_time_canyon
-    wind_direction = [0, -0.5] 
+    wind_direction = [0.8, 0.8] 
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state, wind_direction))
 
@@ -210,7 +180,6 @@ def main():
     config.save()
     # save timeline to file
     utils.save(timeline, config.timeline_path)
-
 
 if __name__ == "__main__":
     main()
