@@ -20,6 +20,31 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
+
+# ----- PARAMETERS POSSIBLE TO EXPERIMENT WITH -----
+
+# TRUE for fire starting at the incinerator
+start_at_incinerator = True
+# TRUE for fire starting at the power plant
+start_at_power_plant = False
+
+# Determines the timing and location of the water drop
+global water_drop
+water_drop = {
+    'countdown': 40, # generetion when the water will start being dropped
+    'x1': 30,
+    'x2': 50, # difference between xs determines the width of the drop 
+    'y1': 70,
+    'y2': 74 # difference between ys determines the height of a single drop 
+             # (there's multiple small drops going in the direction away from the town)
+}
+
+# Determines the wind direction (values between -0.5 and 0.5)
+global wind_direction
+wind_direction = [0, 0]
+
+# -------------------------------------------------
+
 CHAPARRAL = 0
 LAKE = 1
 FOREST = 2
@@ -43,15 +68,6 @@ GRID_SIZE = 100
 burn_time_chaparral = 32
 burn_time_forest = 300
 burn_time_canyon = 2
-
-# TRUE for fire starting at the incinerator
-start_at_incinerator = True
-# TRUE for fire starting at the power plant
-start_at_power_plant = False
-
-# Determines the generation and the location of the water drop
-global water_countdown
-water_countdown = 40
 
 # starting grid
 global start_grid
@@ -102,9 +118,9 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, initi
     x = np.random.rand(GRID_SIZE, GRID_SIZE)
 
     # Create stronger fire as cells burn
-    grid[(grid == BURNING_2) & (burning_state < np.random.rand(1)[0] * 1/3 * initial_burning_state)] = BURNING_3
+    grid[(grid == BURNING_2) & (burning_state == initial_burning_state - 20)] = BURNING_3
 
-    grid[(grid == BURNING_1) & (burning_state < np.random.rand(1)[0] * 2/3 * initial_burning_state)] = BURNING_2
+    grid[(grid == BURNING_1) & (burning_state == initial_burning_state - 10)] = BURNING_2
 
 
     # Look at each neighbour of each cell separately and determine whether they're on fire.
@@ -185,14 +201,20 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, initi
                 
             grid[start_burning_chaparal | start_burning_forest | start_burning_canyon | start_burning_town] = BURNING_1
 
-    global water_countdown
+    global water_drop
     global start_grid
-    water_countdown -= 1
-    
+    water_drop['countdown'] -= 1
+
     # The water is released over the couse of multiple generations,
     # simulating rounds of helicopters flying over a piece of land in the direction away from the town
-    if (water_countdown <= 0) & (water_countdown > -31):
-        grid[(70 + water_countdown):(74 + water_countdown), 30:50] = start_grid[(70 + water_countdown):(74 + water_countdown), 30:50]
+    if (water_drop['countdown'] <= 0) & (water_drop['countdown'] > -31):
+        y1 = water_drop['y1'] + water_drop['countdown']
+        y2 = water_drop['y2'] + water_drop['countdown']
+        x1 = water_drop['x1']
+        x2 = water_drop['x2']
+
+        grid[y1:y2, x1:x2] = start_grid[y1:y2, x1:x2]
+
     grid[burnt] = BURNED
 
     return grid
@@ -229,8 +251,6 @@ def setup(args):
 def main():
     # Open the config object
     config = setup(sys.argv[1:])
-
-    wind_direction = [0, -0.5] 
     
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state, initial_burning_state, wind_direction))
