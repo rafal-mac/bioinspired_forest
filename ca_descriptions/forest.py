@@ -31,11 +31,11 @@ start_at_power_plant = False
 # Determines the timing and location of the water drop
 global water_drop
 water_drop = {
-    'countdown': 40,
+    'countdown': 40, # generetion when the water will start being dropped
     'x1': 30,
-    'x2': 50,
+    'x2': 50, # difference between xs determines the width of the drop 
     'y1': 70,
-    'y2': 74
+    'y2': 74 # difference between ys determines the high of a single drop (there's multiple small drops)
 }
 
 # Determines the wind direction (values between -0.5 and 0.5)
