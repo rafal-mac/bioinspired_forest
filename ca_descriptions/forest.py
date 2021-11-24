@@ -102,9 +102,10 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, initi
     x = np.random.rand(GRID_SIZE, GRID_SIZE)
 
     # Create stronger fire as cells burn
-    grid[(grid == BURNING_1) & (burning_state < 2/3 * initial_burning_state)] = BURNING_2
+    grid[(grid == BURNING_2) & (burning_state < np.random.rand(1)[0] * 1/3 * initial_burning_state)] = BURNING_3
 
-    grid[(grid == BURNING_2) & (burning_state < 1/3 * initial_burning_state)] = BURNING_3
+    grid[(grid == BURNING_1) & (burning_state < np.random.rand(1)[0] * 2/3 * initial_burning_state)] = BURNING_2
+
 
     # Look at each neighbour of each cell separately and determine whether they're on fire.
     # The more cells burning around the target cell, the more chances for it to catch fire.
