@@ -48,7 +48,6 @@ water_countdown = 40
 global start_grid
 start_grid = np.zeros((100, 100), dtype=int)
 
-
 # unpenetratable border to contain the fire
 start_grid[0:99, 0:1] = BURNED
 start_grid[99:100, 0:99] = BURNED
@@ -110,7 +109,7 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                     factor = 1 + (wind_direction[1] * -1)
                 else:
                     factor = x * wind_direction[1]
-
+        """
         #diagonals considered with both north and east vectors
         if wind_direction[0] != 0 and wind_direction[1] != 0:
             if cell_directions[direction_no] == "NE" or "NW":
@@ -126,7 +125,6 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                 else:
                     factor = x *  (1 + (-1 * wind_direction[0]))
                 
-            
             if cell_directions[direction_no] == "SE" or cell_directions[direction_no] == "NE":
                 if wind_direction[1] > 0:
                     factor = factor * wind_direction[1]
@@ -139,7 +137,7 @@ def transition_func(grid, neighbourstates, neighbourcounts, burning_state, wind_
                 else:
                     factor = factor * (-1 * wind_direction[1])
 
-
+        """
 
         counter += 1
         
@@ -195,7 +193,7 @@ def main():
     burning_state[start_grid == 0] = burn_time_chaparral
     burning_state[start_grid == 2] = burn_time_forest
     burning_state[start_grid == 3] = burn_time_canyon
-    wind_direction = [0, 0.5] 
+    wind_direction = [0, -0.5] 
     # Create grid object
     grid = Grid2D(config, (transition_func, burning_state, wind_direction))
 
